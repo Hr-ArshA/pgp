@@ -20,7 +20,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with: 
-          name: problems-report
+          name: problems-report.html
           path: android/build/reports/problems/problems-report.html
         
       - uses: actions/upload-artifact@v4
