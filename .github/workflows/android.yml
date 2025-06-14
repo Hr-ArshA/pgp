@@ -21,15 +21,27 @@ jobs:
             STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
             KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
             KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release.apk
+          path: android/app/build/outputs/apk/release/*.apk
+
+      - run: cd android && ./gradlew assembleDebug
+        env:
+              STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+              KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+              KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release.apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          
       - run: tree android/app/build
 
       - uses: actions/upload-artifact@v4
         with: 
           name: problems-report.html
           path: android/build/reports/problems/problems-report.html
-        
-      - uses: actions/upload-artifact@v4
-        with:
-          name: app-release.apk
-          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+
+      
         
