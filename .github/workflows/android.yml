@@ -19,5 +19,5 @@ jobs:
       
       - uses: actions/upload-artifact@v4
         with:
-          name: app-release.apk  # Change the name to reflect the release APK
-          path: app-release.apk  # Correct path to the release APK
+          name: app-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
