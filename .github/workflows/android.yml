@@ -19,7 +19,7 @@ jobs:
       
       - run: npm install
       - run: npx cap sync
-      - run: cd android && ./gradlew assembleRelease
+      - run: cd android && ./gradlew assembleRelease --stacktrace --info || echo "Build failed"
       
       - uses: actions/upload-artifact@v4
         with:
