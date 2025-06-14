@@ -8,7 +8,6 @@ env:
   playstore_name: ArshA
 
 on:
-
   push:
     branches:
       - 'release/**'
