@@ -17,6 +17,7 @@ jobs:
       - run: npx cap add android
       - run: npx cap sync
       - run: cd android && ./gradlew assembleRelease
+      - run: tree android/app/build
 
       - uses: actions/upload-artifact@v4
         with: 
