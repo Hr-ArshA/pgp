@@ -11,7 +11,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
       
       - run: npm install
       - run: npx cap sync
@@ -19,5 +19,5 @@ jobs:
       
       - uses: actions/upload-artifact@v4
         with:
-          name: app-debug.apk
-          path: android/app/build/outputs/apk/app.apk
+          name: app-release.apk  # Change the name to reflect the release APK
+          path: android/app/build/outputs/apk/release/app-release.apk  # Correct path to the release APK
