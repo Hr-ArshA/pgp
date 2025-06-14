@@ -34,7 +34,7 @@ jobs:
       - name: Set Up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu' # See 'Supported distributions' for available options
+          distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: '21'
           cache: 'gradle'
       - run: cd android
@@ -61,6 +61,7 @@ jobs:
       # Noted for main module build [main_project_module]:bundleRelease
       - name: Build app bundle release (AAB) - ${{ env.main_project_module }} module
         run: android/gradlew ${{ env.main_project_module }}:bundleRelease
+      - run: echo ${{ env.main_project_module }}
 
       # Upload Artifact Build
       # Noted For Output [main_project_module]/build/outputs/apk/debug/
