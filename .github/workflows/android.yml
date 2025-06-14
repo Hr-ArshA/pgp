@@ -21,9 +21,12 @@ jobs:
       - run: npx cap sync
       - run: cd android && ./gradlew assembleRelease --stacktrace --info || echo "Build failed"
         env:
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+            STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+            KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+            KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      - run: ls -la android/app # Check if build directory exists
+      - run: tree android/app/build || echo "Build directory not found"
+        
       - run: find android -name "*.apk"
       - run: tree android/app/build
       
