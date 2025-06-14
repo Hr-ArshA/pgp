@@ -20,6 +20,10 @@ jobs:
       - run: npm install
       - run: npx cap sync
       - run: cd android && ./gradlew assembleRelease --stacktrace --info || echo "Build failed"
+        env:
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       - run: tree ..
       
       - uses: actions/upload-artifact@v4
