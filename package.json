@@ -1,0 +1,23 @@
+{
+  "dependencies": {
+    "@capacitor-community/file-opener": "^7.0.1",
+    "@capacitor/android": "^7.3.0",
+    "@capacitor/cli": "^7.3.0",
+    "@capacitor/core": "^7.3.0",
+    "@capacitor/filesystem": "^7.1.1"
+  },
+  "name": "enc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "openpgp.min.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

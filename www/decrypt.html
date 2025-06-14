@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PGP Decrypt - Secure Message Decryption</title>
+    <script src="js/openpgp.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            border-radius: 16px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            font-weight: bold;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(45deg, #764ba2, #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+            font-size: 14px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: block;
+            cursor: pointer;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-wrapper:hover {
+            border-color: #764ba2;
+            background: #f1f5f9;
+            transform: translateY(-2px);
+        }
+
+        .file-input-wrapper.dragover {
+            border-color: #764ba2;
+            background: #eef2ff;
+        }
+
+        input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-content {
+            pointer-events: none;
+        }
+
+        .file-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+            color: #764ba2;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #764ba2;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #764ba2, #667eea);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(118, 75, 162, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal h3 {
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .modal input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            flex: 1;
+        }
+
+        .btn-confirm {
+            background: linear-gradient(45deg, #764ba2, #667eea);
+            flex: 2;
+        }
+
+        .result-section {
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 1px solid #e2e8f0;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .decrypted-text {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e0;
+            border-radius: 12px;
+            padding: 20px;
+            font-family: inherit;
+            font-size: 16px;
+            line-height: 1.6;
+            word-break: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+
+        .navigation {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .nav-link {
+            color: #764ba2;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .nav-link:hover {
+            background: rgba(118, 75, 162, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .status {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .input-method {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .method-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .method-btn.active {
+            border-color: #764ba2;
+            background: rgba(118, 75, 162, 0.1);
+            color: #764ba2;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .btn {
+                padding: 14px 24px;
+            }
+            
+            .modal-content {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🔓</div>
+            <h1>PGP Decrypt</h1>
+            <p class="subtitle">Decrypt your secure messages safely</p>
+        </div>
+
+        <form id="decryptForm">
+            <div class="form-group">
+                <label for="privateKey">Private Key File</label>
+                <div class="file-input-wrapper" id="privateKeyWrapper">
+                    <input type="file" id="privateKey" accept=".asc,.txt,.key,.priv" required>
+                    <div class="file-input-content">
+                        <div class="file-icon">🔑</div>
+                        <div>Click to select or drag & drop your private key file</div>
+                        <small style="color: #666; margin-top: 8px; display: block;">Supported formats: .asc, .txt, .key, .priv</small>
+                    </div>
+                </div>
+                <div id="keyFileName" style="margin-top: 8px; color: #764ba2; font-size: 14px;"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Encrypted Message Input Method</label>
+                <div class="input-method">
+                    <div class="method-btn active" id="textMethod">📝 Paste Text</div>
+                    <div class="method-btn" id="fileMethod">📁 Upload File</div>
+                </div>
+
+                <div id="textInput">
+                    <textarea id="encryptedText" placeholder="Paste your encrypted PGP message here..." required></textarea>
+                </div>
+
+                <div id="fileInput" style="display: none;">
+                    <div class="file-input-wrapper" id="encryptedFileWrapper">
+                        <input type="file" id="encryptedFile" accept=".txt,.asc">
+                        <div class="file-input-content">
+                            <div class="file-icon">📄</div>
+                            <div>Click to select or drag & drop encrypted file</div>
+                        </div>
+                    </div>
+                    <div id="encryptedFileName" style="margin-top: 8px; color: #764ba2; font-size: 14px;"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn" id="decryptBtn">
+                🔓 Decrypt Message
+            </button>
+        </form>
+
+        <div id="status"></div>
+
+        <div class="result-section" id="resultSection">
+            <h3 style="margin-bottom: 16px; color: #444;">Decrypted Message</h3>
+            <div class="decrypted-text" id="decryptedText"></div>
+        </div>
+
+        <div class="navigation">
+            <a href="encrypt.html" class="nav-link">🔒 Go to Encrypt Page</a>
+        </div>
+    </div>
+
+    <!-- Password Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <h3>🔐 Enter Private Key Password</h3>
+            <input type="password" id="privateKeyPassword" placeholder="Enter your private key password..." autocomplete="current-password">
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-cancel" onclick="closePasswordModal()">Cancel</button>
+                <button type="button" class="btn btn-confirm" onclick="confirmDecrypt()">Decrypt</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let privateKeyData = null;
+        let encryptedMessageData = null;
+        let currentInputMethod = 'text';
+
+        // File input handling
+        const privateKeyInput = document.getElementById('privateKey');
+        const privateKeyWrapper = document.getElementById('privateKeyWrapper');
+        const keyFileName = document.getElementById('keyFileName');
+        const encryptedFileInput = document.getElementById('encryptedFile');
+        const encryptedFileWrapper = document.getElementById('encryptedFileWrapper');
+        const encryptedFileName = document.getElementById('encryptedFileName');
+
+        // Input method switching
+        document.getElementById('textMethod').addEventListener('click', () => switchInputMethod('text'));
+        document.getElementById('fileMethod').addEventListener('click', () => switchInputMethod('file'));
+
+        function switchInputMethod(method) {
+            currentInputMethod = method;
+            
+            document.querySelectorAll('.method-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(method + 'Method').classList.add('active');
+            
+            if (method === 'text') {
+                document.getElementById('textInput').style.display = 'block';
+                document.getElementById('fileInput').style.display = 'none';
+            } else {
+                document.getElementById('textInput').style.display = 'none';
+                document.getElementById('fileInput').style.display = 'block';
+            }
+        }
+
+        // Private key file handling
+        privateKeyInput.addEventListener('change', () => handleFileSelect(privateKeyInput, keyFileName, (data) => {
+            privateKeyData = data;
+        }));
+
+        setupDragAndDrop(privateKeyWrapper, privateKeyInput, () => handleFileSelect(privateKeyInput, keyFileName, (data) => {
+            privateKeyData = data;
+        }));
+
+        // Encrypted file handling
+        encryptedFileInput.addEventListener('change', () => handleFileSelect(encryptedFileInput, encryptedFileName, (data) => {
+            encryptedMessageData = data;
+        }));
+
+        setupDragAndDrop(encryptedFileWrapper, encryptedFileInput, () => handleFileSelect(encryptedFileInput, encryptedFileName, (data) => {
+            encryptedMessageData = data;
+        }));
+
+        function handleFileSelect(input, displayElement, callback) {
+            const file = input.files[0];
+            if (file) {
+                displayElement.textContent = `Selected: ${file.name}`;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    callback(e.target.result);
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function setupDragAndDrop(wrapper, input, onDrop) {
+            wrapper.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                wrapper.classList.add('dragover');
+            });
+
+            wrapper.addEventListener('dragleave', () => {
+                wrapper.classList.remove('dragover');
+            });
+
+            wrapper.addEventListener('drop', (e) => {
+                e.preventDefault();
+                wrapper.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    input.files = files;
+                    onDrop();
+                }
+            });
+        }
+
+        // Form submission
+        document.getElementById('decryptForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            if (!privateKeyData) {
+                showStatus('Please select a private key file first.', 'error');
+                return;
+            }
+
+            // Get encrypted message based on input method
+            if (currentInputMethod === 'text') {
+                encryptedMessageData = document.getElementById('encryptedText').value;
+            }
+
+            if (!encryptedMessageData || encryptedMessageData.trim() === '') {
+                showStatus('Please provide an encrypted message.', 'error');
+                return;
+            }
+
+            // Show password modal
+            document.getElementById('passwordModal').classList.add('show');
+            document.getElementById('privateKeyPassword').focus();
+        });
+
+        // Password modal handling
+        document.getElementById('privateKeyPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                confirmDecrypt();
+            }
+        });
+
+        async function confirmDecrypt() {
+            const password = document.getElementById('privateKeyPassword').value;
+            const decryptBtn = document.getElementById('decryptBtn');
+            const status = document.getElementById('status');
+            
+            closePasswordModal();
+            
+            decryptBtn.disabled = true;
+            decryptBtn.textContent = '🔄 Decrypting...';
+            status.innerHTML = '';
+
+            try {
+                // Read the private key
+                const privateKey = await openpgp.decryptKey({
+                    privateKey: await openpgp.readPrivateKey({ armoredKey: privateKeyData }),
+                    passphrase: password
+                });
+                
+                // Read the encrypted message
+                const message = await openpgp.readMessage({
+                    armoredMessage: encryptedMessageData
+                });
+
+                // Decrypt the message
+                const { data: decrypted } = await openpgp.decrypt({
+                    message,
+                    decryptionKeys: privateKey
+                });
+
+                // Display result
+                document.getElementById('decryptedText').textContent = decrypted;
+                document.getElementById('resultSection').classList.add('show');
+                
+                showStatus('Message decrypted successfully!', 'success');
+                
+            } catch (error) {
+                showStatus(`Decryption failed: ${error.message}`, 'error');
+            } finally {
+                decryptBtn.disabled = false;
+                decryptBtn.textContent = '🔓 Decrypt Message';
+                document.getElementById('privateKeyPassword').value = '';
+            }
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.remove('show');
+            document.getElementById('privateKeyPassword').value = '';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('passwordModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closePasswordModal();
+            }
+        });
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.innerHTML = `<div class="status ${type}">${message}</div>`;
+            setTimeout(() => {
+                status.innerHTML = '';
+            }, 5000);
+        }
+
+    </script>
+</body>
+</html>
+            

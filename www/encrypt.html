@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PGP Encrypt - Secure Message Encryption</title>
+    <script src="js/openpgp.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            border-radius: 16px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            font-weight: bold;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+            font-size: 14px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: block;
+            cursor: pointer;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-wrapper:hover {
+            border-color: #667eea;
+            background: #f1f5f9;
+            transform: translateY(-2px);
+        }
+
+        .file-input-wrapper.dragover {
+            border-color: #667eea;
+            background: #eef2ff;
+        }
+
+        input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-content {
+            pointer-events: none;
+        }
+
+        .file-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+            color: #667eea;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-section {
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 1px solid #e2e8f0;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .encrypted-text {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e0;
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            word-break: break-all;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #48bb78, #38a169);
+            margin-top: 12px;
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 10px 30px rgba(72, 187, 120, 0.3);
+        }
+
+        .navigation {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .nav-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .nav-link:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .status {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .btn {
+                padding: 14px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🔐</div>
+            <h1>PGP Encrypt</h1>
+            <p class="subtitle">Secure your messages with end-to-end encryption</p>
+        </div>
+
+        <form id="encryptForm">
+            <div class="form-group">
+                <label for="publicKey">Public Key File</label>
+                <div class="file-input-wrapper" id="publicKeyWrapper">
+                    <input type="file" id="publicKey" accept=".asc,.txt,.key,.pub" required>
+                    <div class="file-input-content">
+                        <div class="file-icon">📁</div>
+                        <div>Click to select or drag & drop your public key file</div>
+                        <small style="color: #666; margin-top: 8px; display: block;">Supported formats: .asc, .txt, .key, .pub</small>
+                    </div>
+                </div>
+                <div id="keyFileName" style="margin-top: 8px; color: #667eea; font-size: 14px;"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="messageText">Message to Encrypt</label>
+                <textarea id="messageText" placeholder="Enter your secret message here..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn" id="encryptBtn">
+                🔒 Encrypt Message
+            </button>
+        </form>
+
+        <div id="status"></div>
+
+        <div class="result-section" id="resultSection">
+            <h3 style="margin-bottom: 16px; color: #444;">Encrypted Message</h3>
+            <div class="encrypted-text" id="encryptedText"></div>
+            <button type="button" class="btn btn-secondary" id="downloadBtn">
+                📥 Download Encrypted File
+            </button>
+        </div>
+
+        <div class="navigation">
+            <a href="decrypt.html" class="nav-link">🔓 Go to Decrypt Page</a>
+        </div>
+    </div>
+
+    <script>
+        let publicKeyData = null;
+        let encryptedMessage = null;
+
+        // File input handling
+        const publicKeyInput = document.getElementById('publicKey');
+        const publicKeyWrapper = document.getElementById('publicKeyWrapper');
+        const keyFileName = document.getElementById('keyFileName');
+
+        publicKeyInput.addEventListener('change', handleFileSelect);
+        
+        // Drag and drop functionality
+        publicKeyWrapper.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            publicKeyWrapper.classList.add('dragover');
+        });
+
+        publicKeyWrapper.addEventListener('dragleave', () => {
+            publicKeyWrapper.classList.remove('dragover');
+        });
+
+        publicKeyWrapper.addEventListener('drop', (e) => {
+            e.preventDefault();
+            publicKeyWrapper.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                publicKeyInput.files = files;
+                handleFileSelect();
+            }
+        });
+
+        function handleFileSelect() {
+            const file = publicKeyInput.files[0];
+            if (file) {
+                keyFileName.textContent = `Selected: ${file.name}`;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    publicKeyData = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // Form submission
+        document.getElementById('encryptForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const messageText = document.getElementById('messageText').value;
+            const encryptBtn = document.getElementById('encryptBtn');
+            const status = document.getElementById('status');
+            
+            if (!publicKeyData) {
+                showStatus('Please select a public key file first.', 'error');
+                return;
+            }
+
+            encryptBtn.disabled = true;
+            encryptBtn.textContent = '🔄 Encrypting...';
+            status.innerHTML = '';
+
+            try {
+                // Read the public key
+                const publicKey = await openpgp.readKey({ armoredKey: publicKeyData });
+                
+                // Encrypt the message
+                const encrypted = await openpgp.encrypt({
+                    message: await openpgp.createMessage({ text: messageText }),
+                    encryptionKeys: publicKey
+                });
+
+                encryptedMessage = encrypted;
+                
+                // Display result
+                document.getElementById('encryptedText').textContent = encrypted;
+                document.getElementById('resultSection').classList.add('show');
+                
+                showStatus('Message encrypted successfully!', 'success');
+                
+            } catch (error) {
+                showStatus(`Encryption failed: ${error.message}`, 'error');
+            } finally {
+                encryptBtn.disabled = false;
+                encryptBtn.textContent = '🔒 Encrypt Message';
+            }
+        });
+
+        // Download functionality
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            if (!encryptedMessage) return;
+            
+            const blob = new Blob([encryptedMessage], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'encrypted_message.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showStatus('File downloaded successfully!', 'success');
+        });
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.innerHTML = `<div class="status ${type}">${message}</div>`;
+            setTimeout(() => {
+                status.innerHTML = '';
+            }, 5000);
+        }
+
+    </script>
+</body>
+</html>
